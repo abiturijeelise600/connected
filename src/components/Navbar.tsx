@@ -1,11 +1,14 @@
 import React from 'react';
-import { ShoppingBag, Database, Search, PlusCircle, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ShoppingBag, Database, Search, PlusCircle, Sparkles, CheckCircle2, AlertCircle, User, LogOut } from 'lucide-react';
 
 interface NavbarProps {
   cartCount: number;
   onOpenCart: () => void;
   onOpenConfig: () => void;
   onOpenAdmin: () => void;
+  onOpenAuth: () => void;
+  onSignOut: () => void;
+  currentUser: any;
   isSupabaseLive: boolean;
   searchQuery: string;
   onSearchChange: (q: string) => void;
@@ -16,6 +19,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCart,
   onOpenConfig,
   onOpenAdmin,
+  onOpenAuth,
+  onSignOut,
+  currentUser,
   isSupabaseLive,
   searchQuery,
   onSearchChange,
@@ -84,6 +90,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             <PlusCircle className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Add Product</span>
           </button>
+
+          {/* User Auth Button */}
+          {currentUser ? (
+            <div className="flex items-center gap-1.5 bg-slate-100 pl-2.5 pr-1.5 py-1 rounded-full border border-slate-200 text-xs">
+              <span className="font-semibold text-slate-800 max-w-[100px] sm:max-w-[140px] truncate" title={currentUser.email}>
+                {currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0]}
+              </span>
+              <button
+                onClick={onSignOut}
+                className="p-1 text-slate-400 hover:text-rose-600 rounded-full hover:bg-slate-200 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:text-teal-700 bg-slate-100 hover:bg-teal-50 border border-slate-200 hover:border-teal-200 rounded-full transition-all"
+            >
+              <User className="w-3.5 h-3.5 text-teal-600" />
+              <span className="hidden sm:inline">Sign In</span>
+            </button>
+          )}
 
           {/* Cart Trigger */}
           <button

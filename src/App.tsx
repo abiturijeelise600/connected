@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Category, Product, CartItem, OrderResult } from './types';
-import { fetchCategories, fetchProducts, getSupabaseCredentials } from './lib/supabase';
+import { fetchCategories, fetchProducts, getSupabaseCredentials, getCurrentUser, signOutUser, onAuthStateChange } from './lib/supabase';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { CategoryFilter } from './components/CategoryFilter';
@@ -10,6 +10,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { SupabaseConfigModal } from './components/SupabaseConfigModal';
 import { AdminProductModal } from './components/AdminProductModal';
+import { AuthModal } from './components/AuthModal';
 import { Footer } from './components/Footer';
 import { Loader2, Database, AlertCircle, Sparkles, RefreshCw } from 'lucide-react';
 
@@ -45,8 +46,22 @@ export const App: React.FC = () => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [recentlyAddedId, setRecentlyAddedId] = useState<number | null>(null);
+
+  // Initialize and listen to Auth state
+  useEffect(() => {
+    getCurrentUser().then((user) => setCurrentUser(user));
+    const unsubscribe = onAuthStateChange((user) => setCurrentUser(user));
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOutUser();
+    setCurrentUser(null);
+  };
 
   // Load Data
   const loadData = async () => {
@@ -155,6 +170,9 @@ export const App: React.FC = () => {
         onOpenCart={() => setIsCartOpen(true)}
         onOpenConfig={() => setIsConfigOpen(true)}
         onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onSignOut={handleSignOut}
+        currentUser={currentUser}
         isSupabaseLive={isSupabaseLive}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
@@ -257,6 +275,13 @@ export const App: React.FC = () => {
         items={cart}
         onOrderSuccess={handleOrderSuccess}
         isSupabaseLive={isSupabaseLive}
+        currentUser={currentUser}
+      />
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+        onSuccess={(user) => setCurrentUser(user)}
       />
 
       <SupabaseConfigModal

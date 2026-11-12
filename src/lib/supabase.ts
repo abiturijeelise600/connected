@@ -342,15 +342,18 @@ export async function createOrder(order: OrderInput): Promise<{ order: OrderResu
   }
 
   try {
-    // Insert into public.orders matching schema: { total, status }
+    // Insert into public.orders matching schema: { total, status, user_id }
+    const orderPayload: any = {
+      total: order.total_amount,
+      status: 'completed'
+    };
+    if (order.user_id) {
+      orderPayload.user_id = order.user_id;
+    }
+
     const { data: orderData, error: orderError } = await supabase
       .from('orders')
-      .insert([
-        {
-          total: order.total_amount,
-          status: 'completed'
-        }
-      ])
+      .insert([orderPayload])
       .select('*')
       .single();
 
@@ -439,3 +442,71 @@ export async function createProduct(product: Omit<Product, 'id'>): Promise<{ pro
     isLive: true
   };
 }
+
+// ==============================================================================
+// SUPABASE AUTHENTICATION
+// ==============================================================================
+
+export async function getCurrentUser() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user;
+  } catch (err) {
+    console.error('Error fetching current user:', err);
+    return null;
+  }
+}
+
+export async function signUpUser(email: string, password: string, fullName?: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase client not configured');
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        full_name: fullName || '',
+      }
+    }
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function signInUser(email: string, password: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) throw new Error('Supabase client not configured');
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function signOutUser() {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+}
+
+export function onAuthStateChange(callback: (user: any) => void) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return () => {};
+
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session?.user || null);
+  });
+
+  return () => {
+    subscription.unsubscribe();
+  };
+}
+

@@ -7,7 +7,7 @@ export interface Category {
 export interface Product {
   id: number;
   name: string;
-  title?: string; // alias for name
+  title?: string;
   description: string;
   price: number;
   original_price?: number;
@@ -32,6 +32,8 @@ export interface OrderInput {
   phone_number?: string;
   payment_method: string;
   total_amount: number;
+  user_id?: string;
+  stripe_payment_id?: string;
   items: {
     product_id: number;
     product_title: string;
@@ -47,4 +49,11 @@ export interface OrderResult {
   total_amount: number;
   status: string;
   created_at: string;
+  user_id?: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  fullName?: string;
 }
